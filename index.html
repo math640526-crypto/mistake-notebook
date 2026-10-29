@@ -34,6 +34,9 @@
   .btn-ghost{background:#eef1f6;color:var(--navy)}
   .btn-danger{background:#fef3f2;color:var(--red)}
   .btn-row{display:flex;gap:8px;flex-wrap:wrap}
+  .tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;-webkit-overflow-scrolling:touch}
+  .tab{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-size:14px;cursor:pointer;color:var(--navy)}
+  .tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   .toolbar input[type=search],.toolbar select{flex:1;min-width:120px;padding:11px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:#fff}
   .cards{display:grid;gap:12px}
@@ -93,6 +96,8 @@
     </div>
   </section>
 
+  <div class="tabs" id="subjectTabs"></div>
+
   <div class="toolbar">
     <input type="search" id="q" placeholder="搜尋標題、章節、錯因…">
     <select id="fUnit"><option value="">全部章節</option></select>
@@ -111,7 +116,8 @@
     <h2>💾 備份</h2>
     <p class="note">題目與照片只存在你這個瀏覽器裡。換手機或換瀏覽器前，先匯出備份檔，到新裝置再匯入，就能把題目帶著走。</p>
     <div class="btn-row">
-      <button class="btn btn-ghost" id="exportBtn">匯出備份</button>
+      <button class="btn btn-ghost" id="exportBtn">匯出整本備份</button>
+      <button class="btn btn-ghost" id="exportSubjectBtn" style="display:none">匯出目前科目</button>
       <label class="btn btn-ghost" style="cursor:pointer">匯入備份<input type="file" id="importFile" accept="application/json,.json" hidden></label>
     </div>
   </section>
@@ -125,7 +131,8 @@
 <div class="modal" id="formModal"><div class="sheet">
   <h2 id="formTitle">新增錯題</h2>
   <div class="field"><label>標題</label><input type="text" id="fTitle" placeholder="例如：三角函數求值算錯"></div>
-  <div class="field"><label>章節</label><select id="fUnitInput"></select></div>
+  <div class="field"><label>科目</label><select id="fSubject"></select><input type="text" id="fSubjectCustom" placeholder="自訂科目名稱，例如：英文作文" style="margin-top:8px;display:none"></div>
+  <div class="field"><label>章節／單元</label><select id="fUnitInput"></select><input type="text" id="fUnitText" placeholder="單元／章節自由填寫，可留空" style="display:none"></div>
   <div class="field"><label>錯因</label><select id="fReason">
     <option>計算錯誤</option><option>觀念不清</option><option>看錯題目</option><option>粗心</option><option>其他</option>
   </select></div>
@@ -156,7 +163,10 @@
 <script>
 const KEY = 'mistake-notebook-v1';
 const UNITS = ['1 數與式','2 多項式函數','3 直線與圓','4 指數與對數函數','5 數列與級數','6 數據分析','7 排列組合','8 機率','9 三角比','10 三角函數','11 向量的運算與內積','12 空間概念、行列式與外積','13 空間中的平面與直線','14 矩陣','未分類'];
+const SUBJECTS = ['國文','英文','數學','物理','化學','生物','地球科學','歷史','地理','公民'];
 let items = load();
+items.forEach(it => { if (!it.subject) it.subject = '數學'; });
+let selectedSubject = '全部';
 let reviewIdx = 0;
 let editingId = null;
 let draftQ = [], draftA = [];
@@ -174,6 +184,7 @@ function fillUnitSelects(){
   const opts = UNITS.map(u => '<option>' + esc(u) + '</option>').join('');
   document.getElementById('fUnit').innerHTML = '<option value="">全部章節</option>' + opts;
   document.getElementById('fUnitInput').innerHTML = opts;
+  document.getElementById('fSubject').innerHTML = SUBJECTS.map(x => '<option>' + esc(x) + '</option>').join('') + '<option value="__custom">自訂…</option>';
 }
 
 function fileToEntry(file){
@@ -225,10 +236,11 @@ function filtered(){
   const u = document.getElementById('fUnit').value;
   const s = document.getElementById('fState').value;
   return items.filter(it => {
+    if (selectedSubject !== '全部' && (it.subject || '數學') !== selectedSubject) return false;
     if (u && it.unit !== u) return false;
     if (s === 'todo' && it.done) return false;
     if (s === 'done' && !it.done) return false;
-    if (q && !((it.title + ' ' + it.unit + ' ' + it.reason + ' ' + (it.qText || '') + ' ' + (it.note || '')).includes(q))) return false;
+    if (q && !((it.title + ' ' + (it.subject || '') + ' ' + it.unit + ' ' + it.reason + ' ' + (it.qText || '') + ' ' + (it.note || '')).includes(q))) return false;
     return true;
   }).sort((a, b) => b.createdAt - a.createdAt);
 }
@@ -241,10 +253,11 @@ function mediaHTML(arr){
 }
 
 function renderStats(){
-  const todo = items.filter(i => !i.done).length;
-  document.getElementById('stTotal').textContent = items.length;
+  const base = selectedSubject === '全部' ? items : items.filter(i => (i.subject || '數學') === selectedSubject);
+  const todo = base.filter(i => !i.done).length;
+  document.getElementById('stTotal').textContent = base.length;
   document.getElementById('stTodo').textContent = todo;
-  document.getElementById('stDone').textContent = items.length - todo;
+  document.getElementById('stDone').textContent = base.length - todo;
 }
 
 function renderList(){
@@ -256,7 +269,7 @@ function renderList(){
     return '<div class="card" data-id="' + it.id + '">'
       + (first ? '<img class="thumb" src="' + first.data + '">' : '')
       + '<div class="body"><p class="title">' + esc(it.title || '未命名題目') + '</p>'
-      + '<div class="meta"><span class="chip">' + esc(it.unit) + '</span><span class="chip">' + esc(it.reason) + '</span>'
+      + '<div class="meta"><span class="chip">' + esc(it.subject || '數學') + '</span><span class="chip">' + esc(it.unit) + '</span><span class="chip">' + esc(it.reason) + '</span>'
       + '<span class="' + (it.done ? 'badge-done' : 'badge-todo') + '">' + (it.done ? '已訂正' : '待訂正') + '</span></div>'
       + '<div class="meta" style="margin-top:6px">' + fmtDate(it.createdAt) + '</div></div></div>';
   }).join('');
@@ -264,7 +277,7 @@ function renderList(){
 }
 
 function renderReview(){
-  const todos = items.filter(i => !i.done).sort((a, b) => a.createdAt - b.createdAt);
+  const todos = items.filter(i => !i.done && (selectedSubject === '全部' || (i.subject || '數學') === selectedSubject)).sort((a, b) => a.createdAt - b.createdAt);
   const panel = document.getElementById('reviewPanel');
   if (!todos.length) { panel.style.display = 'none'; return; }
   panel.style.display = 'block';
@@ -285,7 +298,7 @@ function renderReview(){
   panel.dataset.currentId = it.id;
 }
 
-function renderAll(){ renderStats(); renderList(); renderReview(); }
+function renderAll(){ renderSubjectTabs(); renderStats(); renderList(); renderReview(); }
 
 function openForm(it){
   editingId = it ? it.id : null;
@@ -293,7 +306,13 @@ function openForm(it){
   draftA = it ? JSON.parse(JSON.stringify(it.aFiles || [])) : [];
   document.getElementById('formTitle').textContent = it ? '編輯錯題' : '新增錯題';
   document.getElementById('fTitle').value = it ? it.title : '';
-  document.getElementById('fUnitInput').value = it ? it.unit : '未分類';
+  const subj = it ? (it.subject || '數學') : '數學';
+  const selSubj = document.getElementById('fSubject');
+  if (SUBJECTS.includes(subj)) { selSubj.value = subj; document.getElementById('fSubjectCustom').value = ''; }
+  else { selSubj.value = '__custom'; document.getElementById('fSubjectCustom').value = subj; }
+  syncChapterInput(subj);
+  if (subj === '數學') { document.getElementById('fUnitInput').value = it ? it.unit : '未分類'; }
+  else { document.getElementById('fUnitText').value = it && it.unit !== '未分類' ? it.unit : ''; }
   document.getElementById('fReason').value = it ? it.reason : '計算錯誤';
   document.getElementById('fQText').value = it ? (it.qText || '') : '';
   document.getElementById('fAText').value = it ? (it.aText || '') : '';
@@ -308,7 +327,7 @@ function openDetail(id){
   if (!it) return;
   document.getElementById('detailBody').innerHTML =
     '<h2>' + esc(it.title || '未命名題目') + '</h2>'
-    + '<p class="meta"><span class="chip">' + esc(it.unit) + '</span><span class="chip">' + esc(it.reason) + '</span>'
+    + '<p class="meta"><span class="chip">' + esc(it.subject || '數學') + '</span><span class="chip">' + esc(it.unit) + '</span><span class="chip">' + esc(it.reason) + '</span>'
     + '<span class="' + (it.done ? 'badge-done' : 'badge-todo') + '">' + (it.done ? '已訂正' : '待訂正') + '</span>　' + fmtDate(it.createdAt) + '</p>'
     + '<h3 style="color:var(--navy)">題目</h3>' + mediaHTML(it.qFiles) + (it.qText ? '<p>' + esc(it.qText) + '</p>' : '')
     + '<h3 style="color:var(--navy)">答案</h3><div class="answer-hidden"><div class="blur" id="detailAnswer">' + mediaHTML(it.aFiles) + (it.aText ? '<p>' + esc(it.aText) + '</p>' : '<p class="note">（未填答案）</p>') + '</div>'
@@ -337,9 +356,12 @@ document.getElementById('addBtn').onclick = () => openForm(null);
 document.getElementById('cancelBtn').onclick = closeForm;
 document.getElementById('saveBtn').onclick = () => {
   const title = document.getElementById('fTitle').value.trim();
+  const selSubjVal = document.getElementById('fSubject').value;
+  const subject = selSubjVal === '__custom' ? (document.getElementById('fSubjectCustom').value.trim() || '其他') : selSubjVal;
   const data = {
     title: title || ('錯題 ' + fmtDate(Date.now())),
-    unit: document.getElementById('fUnitInput').value,
+    subject: subject,
+    unit: subject === '數學' ? document.getElementById('fUnitInput').value : (document.getElementById('fUnitText').value.trim() || '未分類'),
     reason: document.getElementById('fReason').value,
     qFiles: draftQ, aFiles: draftA,
     qText: document.getElementById('fQText').value.trim(),
@@ -377,7 +399,7 @@ document.getElementById('importFile').addEventListener('change', e => {
       const arr = Array.isArray(data) ? data : data.items;
       if (!Array.isArray(arr)) throw new Error('格式不對');
       if (!confirm('匯入 ' + arr.length + ' 題，會加到現有的錯題本裡，確定嗎？')) return;
-      items = items.concat(arr.map(it => Object.assign({ id: uid(), createdAt: Date.now(), done: false }, it)));
+      items = items.concat(arr.map(it => Object.assign({ id: uid(), createdAt: Date.now(), done: false, subject: '數學' }, it)));
       save(); renderAll(); alert('匯入完成！');
     } catch(err){ alert('備份檔格式不正確，無法匯入。'); }
   };
@@ -386,6 +408,35 @@ document.getElementById('importFile').addEventListener('change', e => {
 document.getElementById('formModal').addEventListener('click', e => { if (e.target.id === 'formModal') closeForm(); });
 document.getElementById('detailModal').addEventListener('click', e => { if (e.target.id === 'detailModal') closeDetail(); });
 
+function renderSubjectTabs(){
+  const customs = [...new Set(items.map(i => i.subject || '數學'))].filter(x => !SUBJECTS.includes(x));
+  const tabs = ['全部', ...SUBJECTS, ...customs];
+  document.getElementById('subjectTabs').innerHTML = tabs.map(x => '<button class="tab' + (x === selectedSubject ? ' active' : '') + '" data-s="' + esc(x) + '">' + esc(x) + '</button>').join('');
+  document.getElementById('exportSubjectBtn').style.display = selectedSubject === '全部' ? 'none' : '';
+}
+function syncChapterInput(subj){
+  const isMath = (subj === '數學');
+  document.getElementById('fUnitInput').style.display = isMath ? '' : 'none';
+  document.getElementById('fUnitText').style.display = isMath ? 'none' : '';
+  document.getElementById('fSubjectCustom').style.display = (document.getElementById('fSubject').value === '__custom') ? '' : 'none';
+}
+document.getElementById('subjectTabs').addEventListener('click', e => {
+  const b = e.target.closest('.tab');
+  if (!b) return;
+  selectedSubject = b.dataset.s; reviewIdx = 0; renderAll();
+});
+document.getElementById('fSubject').addEventListener('change', e => {
+  const v = e.target.value;
+  syncChapterInput(v === '__custom' ? '' : v);
+});
+document.getElementById('exportSubjectBtn').onclick = () => {
+  const arr = items.filter(i => (i.subject || '數學') === selectedSubject);
+  const blob = new Blob([JSON.stringify({ app: 'mistake-notebook', exportedAt: new Date().toISOString(), subject: selectedSubject, items: arr }, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'mistake-notebook-' + selectedSubject + '.json';
+  a.click(); URL.revokeObjectURL(a.href);
+};
 fillUnitSelects();
 renderAll();
 </script>
