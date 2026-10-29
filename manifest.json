@@ -1,0 +1,13 @@
+{
+  "name": "錯題本",
+  "short_name": "錯題本",
+  "description": "個人錯題本：拍照或上傳題目與答案，手機可用，資料存在各自的瀏覽器裡。李向宇老師製作",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#12264d",
+  "theme_color": "#12264d",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
