@@ -151,7 +151,13 @@
     <div class="thumbs" id="aThumbs"></div>
     <textarea id="fAText" placeholder="答案文字（可不填）"></textarea>
   </div>
-  <div class="field"><label>訂正筆記</label><textarea id="fNote" placeholder="這題錯在哪裡、下次要注意什麼…"></textarea></div>
+  <div class="field"><label>訂正筆記</label>
+    <div class="btn-row">
+      <label class="btn btn-ghost" style="cursor:pointer">📷 拍照<input type="file" id="nCam" accept="image/*" capture="environment" hidden></label>
+      <label class="btn btn-ghost" style="cursor:pointer">🖼️ 上傳檔案<input type="file" id="nFile" accept="image/*,.pdf" multiple hidden></label>
+    </div>
+    <div class="thumbs" id="nThumbs"></div>
+    <textarea id="fNote" placeholder="這題錯在哪裡、下次要注意什麼…" style="margin-top:8px"></textarea></div>
   <div class="btn-row">
     <button class="btn btn-navy" id="saveBtn">儲存</button>
     <button class="btn btn-ghost" id="cancelBtn">取消</button>
@@ -163,11 +169,11 @@
 const KEY = 'mistake-notebook-v1';
 const SUBJECTS = ['國文','英文','數學','物理','化學','生物','地球科學','歷史','地理','公民'];
 let items = load();
-items.forEach(it => { if (!it.subject) it.subject = '數學'; });
+items.forEach(it => { if (!it.subject) it.subject = '數學'; if (!it.nFiles) it.nFiles = []; });
 let selectedSubject = '全部';
 let reviewIdx = 0;
 let editingId = null;
-let draftQ = [], draftA = [];
+let draftQ = [], draftA = [], draftN = [];
 
 function load(){ try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){ return []; } }
 function save(){
@@ -206,7 +212,7 @@ function fileToEntry(file){
 async function handleFiles(list, slot){
   const files = Array.from(list || []);
   for (const f of files) {
-    try { (slot === 'q' ? draftQ : draftA).push(await fileToEntry(f)); }
+    try { const arr = slot === 'q' ? draftQ : slot === 'a' ? draftA : draftN; arr.push(await fileToEntry(f)); }
     catch(e){ alert('有一個檔案加入失敗：' + f.name); }
   }
   renderThumbs();
@@ -220,10 +226,11 @@ function renderThumbs(){
   };
   paint(document.getElementById('qThumbs'), draftQ, 'q');
   paint(document.getElementById('aThumbs'), draftA, 'a');
+  paint(document.getElementById('nThumbs'), draftN, 'n');
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('.thumbs .x');
-  if (b) { const arr = b.dataset.slot === 'q' ? draftQ : draftA; arr.splice(+b.dataset.i, 1); renderThumbs(); }
+  if (b) { const arr = b.dataset.slot === 'q' ? draftQ : b.dataset.slot === 'a' ? draftA : draftN; arr.splice(+b.dataset.i, 1); renderThumbs(); }
 });
 
 function filtered(){
@@ -280,7 +287,7 @@ function renderReview(){
   document.getElementById('reviewBody').innerHTML =
     '<p style="font-weight:700;margin:0 0 8px">' + esc(it.title || '未命名題目') + ' <span class="chip">' + esc(it.unit) + '</span></p>'
     + mediaHTML(it.qFiles) + (it.qText ? '<p>' + esc(it.qText) + '</p>' : '')
-    + '<div class="answer-hidden" style="margin-top:12px"><div class="blur" id="reviewAnswer">' + mediaHTML(it.aFiles) + (it.aText ? '<p>' + esc(it.aText) + '</p>' : '<p class="note">（未填答案）</p>') + '</div>'
+    + '<div class="answer-hidden" style="margin-top:12px"><div class="blur" id="reviewAnswer">' + mediaHTML(it.aFiles) + (it.aText ? '<p>' + esc(it.aText) + '</p>' : '<p class="note">（未填答案）</p>') + ((it.note || (it.nFiles && it.nFiles.length)) ? '<hr style="border:0;border-top:1px dashed var(--line);margin:10px 0"><p style="font-weight:700">訂正筆記</p>' + mediaHTML(it.nFiles) + (it.note ? '<p>' + esc(it.note) + '</p>' : '') : '') + '</div>'
     + '<button class="reveal-btn" id="reviewRevealBtn">👁️ 先自己算算，點一下看答案</button></div>';
   document.getElementById('reviewRevealBtn').onclick = () => {
     document.getElementById('reviewAnswer').classList.remove('blur');
@@ -297,6 +304,7 @@ function openForm(it){
   editingId = it ? it.id : null;
   draftQ = it ? JSON.parse(JSON.stringify(it.qFiles || [])) : [];
   draftA = it ? JSON.parse(JSON.stringify(it.aFiles || [])) : [];
+  draftN = it ? JSON.parse(JSON.stringify(it.nFiles || [])) : [];
   document.getElementById('formTitle').textContent = it ? '編輯錯題' : '新增錯題';
   document.getElementById('fTitle').value = it ? it.title : '';
   const subj = it ? (it.subject || '數學') : '數學';
@@ -324,7 +332,7 @@ function openDetail(id){
     + '<h3 style="color:var(--navy)">題目</h3>' + mediaHTML(it.qFiles) + (it.qText ? '<p>' + esc(it.qText) + '</p>' : '')
     + '<h3 style="color:var(--navy)">答案</h3><div class="answer-hidden"><div class="blur" id="detailAnswer">' + mediaHTML(it.aFiles) + (it.aText ? '<p>' + esc(it.aText) + '</p>' : '<p class="note">（未填答案）</p>') + '</div>'
     + '<button class="reveal-btn" id="detailRevealBtn">👁️ 點一下看答案</button></div>'
-    + (it.note ? '<h3 style="color:var(--navy)">訂正筆記</h3><p>' + esc(it.note) + '</p>' : '')
+    + ((it.note || (it.nFiles && it.nFiles.length)) ? '<h3 style="color:var(--navy)">訂正筆記</h3>' + mediaHTML(it.nFiles) + (it.note ? '<p>' + esc(it.note) + '</p>' : '') : '')
     + '<div class="btn-row" style="margin-top:16px">'
     + '<button class="btn btn-gold" id="detailToggleBtn">' + (it.done ? '改回待訂正' : '標記已訂正 ✓') + '</button>'
     + '<button class="btn btn-ghost" id="detailEditBtn">編輯</button>'
@@ -355,7 +363,7 @@ document.getElementById('saveBtn').onclick = () => {
     subject: subject,
     unit: document.getElementById('fUnitText').value.trim() || '未分類',
     reason: document.getElementById('fReason').value,
-    qFiles: draftQ, aFiles: draftA,
+    qFiles: draftQ, aFiles: draftA, nFiles: draftN,
     qText: document.getElementById('fQText').value.trim(),
     aText: document.getElementById('fAText').value.trim(),
     note: document.getElementById('fNote').value.trim()
@@ -374,6 +382,8 @@ document.getElementById('qCam').addEventListener('change', e => { handleFiles(e.
 document.getElementById('qFile').addEventListener('change', e => { handleFiles(e.target.files, 'q'); e.target.value = ''; });
 document.getElementById('aCam').addEventListener('change', e => { handleFiles(e.target.files, 'a'); e.target.value = ''; });
 document.getElementById('aFile').addEventListener('change', e => { handleFiles(e.target.files, 'a'); e.target.value = ''; });
+document.getElementById('nCam').addEventListener('change', e => { handleFiles(e.target.files, 'n'); e.target.value = ''; });
+document.getElementById('nFile').addEventListener('change', e => { handleFiles(e.target.files, 'n'); e.target.value = ''; });
 document.getElementById('exportBtn').onclick = () => {
   const blob = new Blob([JSON.stringify({ app: 'mistake-notebook', exportedAt: new Date().toISOString(), items: items }, null, 1)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -390,7 +400,7 @@ document.getElementById('importFile').addEventListener('change', e => {
       const arr = Array.isArray(data) ? data : data.items;
       if (!Array.isArray(arr)) throw new Error('格式不對');
       if (!confirm('匯入 ' + arr.length + ' 題，會加到現有的錯題本裡，確定嗎？')) return;
-      items = items.concat(arr.map(it => Object.assign({ id: uid(), createdAt: Date.now(), done: false, subject: '數學' }, it)));
+      items = items.concat(arr.map(it => Object.assign({ id: uid(), createdAt: Date.now(), done: false, subject: '數學', nFiles: [] }, it)));
       save(); renderAll(); alert('匯入完成！');
     } catch(err){ alert('備份檔格式不正確，無法匯入。'); }
   };
