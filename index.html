@@ -100,7 +100,6 @@
 
   <div class="toolbar">
     <input type="search" id="q" placeholder="搜尋標題、章節、錯因…">
-    <select id="fUnit"><option value="">全部章節</option></select>
     <select id="fState">
       <option value="">全部狀態</option>
       <option value="todo">待訂正</option>
@@ -132,7 +131,7 @@
   <h2 id="formTitle">新增錯題</h2>
   <div class="field"><label>標題</label><input type="text" id="fTitle" placeholder="例如：三角函數求值算錯"></div>
   <div class="field"><label>科目</label><select id="fSubject"></select><input type="text" id="fSubjectCustom" placeholder="自訂科目名稱，例如：英文作文" style="margin-top:8px;display:none"></div>
-  <div class="field"><label>章節／單元</label><select id="fUnitInput"></select><input type="text" id="fUnitText" placeholder="單元／章節自由填寫，可留空" style="display:none"></div>
+  <div class="field"><label>章節／單元</label><input type="text" id="fUnitText" placeholder="章節／單元自由填寫，例如：三角函數，可留空"></div>
   <div class="field"><label>錯因</label><select id="fReason">
     <option>計算錯誤</option><option>觀念不清</option><option>看錯題目</option><option>粗心</option><option>其他</option>
   </select></div>
@@ -162,7 +161,6 @@
 <div class="modal" id="detailModal"><div class="sheet" id="detailBody"></div></div>
 <script>
 const KEY = 'mistake-notebook-v1';
-const UNITS = ['1 數與式','2 多項式函數','3 直線與圓','4 指數與對數函數','5 數列與級數','6 數據分析','7 排列組合','8 機率','9 三角比','10 三角函數','11 向量的運算與內積','12 空間概念、行列式與外積','13 空間中的平面與直線','14 矩陣','未分類'];
 const SUBJECTS = ['國文','英文','數學','物理','化學','生物','地球科學','歷史','地理','公民'];
 let items = load();
 items.forEach(it => { if (!it.subject) it.subject = '數學'; });
@@ -180,10 +178,7 @@ function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function fmtDate(ts){ const d = new Date(ts); return d.getFullYear() + '/' + (d.getMonth()+1) + '/' + d.getDate(); }
 
-function fillUnitSelects(){
-  const opts = UNITS.map(u => '<option>' + esc(u) + '</option>').join('');
-  document.getElementById('fUnit').innerHTML = '<option value="">全部章節</option>' + opts;
-  document.getElementById('fUnitInput').innerHTML = opts;
+function fillSubjectSelect(){
   document.getElementById('fSubject').innerHTML = SUBJECTS.map(x => '<option>' + esc(x) + '</option>').join('') + '<option value="__custom">自訂…</option>';
 }
 
@@ -233,11 +228,9 @@ document.addEventListener('click', e => {
 
 function filtered(){
   const q = (document.getElementById('q').value || '').trim();
-  const u = document.getElementById('fUnit').value;
   const s = document.getElementById('fState').value;
   return items.filter(it => {
     if (selectedSubject !== '全部' && (it.subject || '數學') !== selectedSubject) return false;
-    if (u && it.unit !== u) return false;
     if (s === 'todo' && it.done) return false;
     if (s === 'done' && !it.done) return false;
     if (q && !((it.title + ' ' + (it.subject || '') + ' ' + it.unit + ' ' + it.reason + ' ' + (it.qText || '') + ' ' + (it.note || '')).includes(q))) return false;
@@ -310,9 +303,8 @@ function openForm(it){
   const selSubj = document.getElementById('fSubject');
   if (SUBJECTS.includes(subj)) { selSubj.value = subj; document.getElementById('fSubjectCustom').value = ''; }
   else { selSubj.value = '__custom'; document.getElementById('fSubjectCustom').value = subj; }
-  syncChapterInput(subj);
-  if (subj === '數學') { document.getElementById('fUnitInput').value = it ? it.unit : '未分類'; }
-  else { document.getElementById('fUnitText').value = it && it.unit !== '未分類' ? it.unit : ''; }
+  syncCustomSubject();
+  document.getElementById('fUnitText').value = it && it.unit !== '未分類' ? it.unit : '';
   document.getElementById('fReason').value = it ? it.reason : '計算錯誤';
   document.getElementById('fQText').value = it ? (it.qText || '') : '';
   document.getElementById('fAText').value = it ? (it.aText || '') : '';
@@ -361,7 +353,7 @@ document.getElementById('saveBtn').onclick = () => {
   const data = {
     title: title || ('錯題 ' + fmtDate(Date.now())),
     subject: subject,
-    unit: subject === '數學' ? document.getElementById('fUnitInput').value : (document.getElementById('fUnitText').value.trim() || '未分類'),
+    unit: document.getElementById('fUnitText').value.trim() || '未分類',
     reason: document.getElementById('fReason').value,
     qFiles: draftQ, aFiles: draftA,
     qText: document.getElementById('fQText').value.trim(),
@@ -377,7 +369,6 @@ document.getElementById('list').addEventListener('click', e => {
   if (c) openDetail(c.dataset.id);
 });
 document.getElementById('q').addEventListener('input', renderList);
-document.getElementById('fUnit').addEventListener('change', renderList);
 document.getElementById('fState').addEventListener('change', renderList);
 document.getElementById('qCam').addEventListener('change', e => { handleFiles(e.target.files, 'q'); e.target.value = ''; });
 document.getElementById('qFile').addEventListener('change', e => { handleFiles(e.target.files, 'q'); e.target.value = ''; });
@@ -414,10 +405,7 @@ function renderSubjectTabs(){
   document.getElementById('subjectTabs').innerHTML = tabs.map(x => '<button class="tab' + (x === selectedSubject ? ' active' : '') + '" data-s="' + esc(x) + '">' + esc(x) + '</button>').join('');
   document.getElementById('exportSubjectBtn').style.display = selectedSubject === '全部' ? 'none' : '';
 }
-function syncChapterInput(subj){
-  const isMath = (subj === '數學');
-  document.getElementById('fUnitInput').style.display = isMath ? '' : 'none';
-  document.getElementById('fUnitText').style.display = isMath ? 'none' : '';
+function syncCustomSubject(){
   document.getElementById('fSubjectCustom').style.display = (document.getElementById('fSubject').value === '__custom') ? '' : 'none';
 }
 document.getElementById('subjectTabs').addEventListener('click', e => {
@@ -425,10 +413,7 @@ document.getElementById('subjectTabs').addEventListener('click', e => {
   if (!b) return;
   selectedSubject = b.dataset.s; reviewIdx = 0; renderAll();
 });
-document.getElementById('fSubject').addEventListener('change', e => {
-  const v = e.target.value;
-  syncChapterInput(v === '__custom' ? '' : v);
-});
+document.getElementById('fSubject').addEventListener('change', () => { syncCustomSubject(); });
 document.getElementById('exportSubjectBtn').onclick = () => {
   const arr = items.filter(i => (i.subject || '數學') === selectedSubject);
   const blob = new Blob([JSON.stringify({ app: 'mistake-notebook', exportedAt: new Date().toISOString(), subject: selectedSubject, items: arr }, null, 1)], { type: 'application/json' });
@@ -437,7 +422,7 @@ document.getElementById('exportSubjectBtn').onclick = () => {
   a.download = 'mistake-notebook-' + selectedSubject + '.json';
   a.click(); URL.revokeObjectURL(a.href);
 };
-fillUnitSelects();
+fillSubjectSelect();
 renderAll();
 </script>
 </body>
