@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>錯題本｜李向宇老師製作</title>
+<style>
+  :root{--navy:#12264d;--navy2:#1b3a6b;--gold:#c9a227;--gold2:#e3c766;--paper:#f6f3ec;--card:#fff;--ink:#1f2937;--muted:#6b7280;--line:#e5e0d2;--red:#b42318;--green:#067647}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;background:var(--paper);color:var(--ink);-webkit-text-size-adjust:100%}
+  header{background:var(--navy);color:#fff;padding:22px 18px 16px;text-align:center}
+  header h1{margin:0;font-size:26px;letter-spacing:2px}
+  header .credit{color:var(--gold2);font-size:13px;margin-top:6px;letter-spacing:1px}
+  .goldrule{height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:12px auto 0;max-width:320px}
+  main{max-width:720px;margin:0 auto;padding:16px 14px 40px}
+  .stats{display:flex;gap:10px;margin:2px 0 14px}
+  .stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+  .stat b{display:block;font-size:22px;color:var(--navy)}
+  .stat span{font-size:12px;color:var(--muted)}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+  .panel h2{margin:0 0 10px;font-size:17px;color:var(--navy)}
+  .btn{display:inline-block;border:0;border-radius:10px;padding:11px 18px;font-size:15px;cursor:pointer}
+  .btn-navy{background:var(--navy);color:#fff}
+  .btn-gold{background:var(--gold);color:#1f2937;font-weight:700}
+  .btn-ghost{background:#eef1f6;color:var(--navy)}
+  .btn-danger{background:#fef3f2;color:var(--red)}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .toolbar input[type=search],.toolbar select{flex:1;min-width:120px;padding:11px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:#fff}
+  .cards{display:grid;gap:12px}
+  @media(min-width:560px){.cards{grid-template-columns:1fr 1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;text-align:left}
+  .card img.thumb{width:100%;height:150px;object-fit:cover;display:block;background:#eef1f6}
+  .card .body{padding:12px 14px}
+  .card .title{font-weight:700;font-size:16px;margin:0 0 6px}
+  .card .meta{font-size:12px;color:var(--muted)}
+  .chip{display:inline-block;font-size:12px;border-radius:999px;padding:2px 9px;margin-right:6px;background:#eef1f6;color:var(--navy)}
+  .badge-todo{color:var(--red);font-weight:700;font-size:12px}
+  .badge-done{color:var(--green);font-weight:700;font-size:12px}
+  .empty{text-align:center;color:var(--muted);padding:30px 10px;font-size:15px}
+  .imgs{display:flex;flex-direction:column;gap:10px}
+  .imgs img{width:100%;border-radius:10px;border:1px solid var(--line)}
+  .pdf-link{display:block;padding:12px;border:1px dashed var(--gold);border-radius:10px;text-align:center;color:var(--navy);text-decoration:none}
+  .answer-hidden{position:relative}
+  .answer-hidden .blur{filter:blur(9px);pointer-events:none;user-select:none}
+  .reveal-btn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(18,38,77,.45);border:0;border-radius:10px;color:#fff;font-size:16px;cursor:pointer;width:100%}
+  .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .thumbs .t{position:relative;width:84px;height:84px}
+  .thumbs img{width:84px;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+  .thumbs .x{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:0;background:var(--red);color:#fff;cursor:pointer;font-size:13px}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:14px;font-weight:700;margin-bottom:5px;color:var(--navy)}
+  .field input[type=text],.field select,.field textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:#fff}
+  .field textarea{min-height:70px;resize:vertical}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;overflow-y:auto;z-index:50;padding:16px}
+  .modal.open{display:block}
+  .modal .sheet{max-width:680px;margin:20px auto;background:#fff;border-radius:16px;padding:18px}
+  .modal .sheet h2{margin:0 0 12px;color:var(--navy)}
+  footer{text-align:center;color:var(--muted);font-size:13px;padding:10px 14px 30px}
+  footer .credit{color:var(--gold);font-weight:700}
+  .note{font-size:13px;color:var(--muted);line-height:1.6}
+</style>
+</head>
+<body>
+<header>
+  <h1>📓 錯題本</h1>
+  <div class="credit">李向宇老師製作</div>
+  <div class="goldrule"></div>
+</header>
+<main>
+  <div class="stats">
+    <div class="stat"><b id="stTotal">0</b><span>全部題目</span></div>
+    <div class="stat"><b id="stTodo">0</b><span>待訂正</span></div>
+    <div class="stat"><b id="stDone">0</b><span>已訂正</span></div>
+  </div>
+
+  <section class="panel" id="reviewPanel" style="display:none">
+    <h2>📖 複習一下</h2>
+    <p class="note" id="reviewProgress"></p>
+    <div id="reviewBody"></div>
+    <div class="btn-row" style="margin-top:12px">
+      <button class="btn btn-gold" id="reviewDoneBtn">這次答對了 ✓</button>
+      <button class="btn btn-ghost" id="reviewNextBtn">下一題 →</button>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <input type="search" id="q" placeholder="搜尋標題、章節、錯因…">
+    <select id="fUnit"><option value="">全部章節</option></select>
+    <select id="fState">
+      <option value="">全部狀態</option>
+      <option value="todo">待訂正</option>
+      <option value="done">已訂正</option>
+    </select>
+    <button class="btn btn-navy" id="addBtn">＋ 新增錯題</button>
+  </div>
+
+  <div class="cards" id="list"></div>
+  <div class="empty" id="emptyMsg" style="display:none">還沒有錯題，按「新增錯題」收進第一題吧。</div>
+
+  <section class="panel">
+    <h2>💾 備份</h2>
+    <p class="note">題目與照片只存在你這個瀏覽器裡。換手機或換瀏覽器前，先匯出備份檔，到新裝置再匯入，就能把題目帶著走。</p>
+    <div class="btn-row">
+      <button class="btn btn-ghost" id="exportBtn">匯出備份</button>
+      <label class="btn btn-ghost" style="cursor:pointer">匯入備份<input type="file" id="importFile" accept="application/json,.json" hidden></label>
+    </div>
+  </section>
+</main>
+<footer>
+  <div class="goldrule" style="margin:0 auto 10px"></div>
+  <span class="credit">李向宇老師製作</span>
+  <div class="note">本頁為開源靜態網頁，資料只存在使用者自己的瀏覽器裡，不會上傳到任何伺服器。</div>
+</footer>
+
+<div class="modal" id="formModal"><div class="sheet">
+  <h2 id="formTitle">新增錯題</h2>
+  <div class="field"><label>標題</label><input type="text" id="fTitle" placeholder="例如：三角函數求值算錯"></div>
+  <div class="field"><label>章節</label><select id="fUnitInput"></select></div>
+  <div class="field"><label>錯因</label><select id="fReason">
+    <option>計算錯誤</option><option>觀念不清</option><option>看錯題目</option><option>粗心</option><option>其他</option>
+  </select></div>
+  <div class="field"><label>題目照片 / 檔案</label>
+    <div class="btn-row">
+      <label class="btn btn-ghost" style="cursor:pointer">📷 拍照<input type="file" id="qCam" accept="image/*" capture="environment" hidden></label>
+      <label class="btn btn-ghost" style="cursor:pointer">🖼️ 上傳檔案<input type="file" id="qFile" accept="image/*,.pdf" multiple hidden></label>
+    </div>
+    <div class="thumbs" id="qThumbs"></div>
+    <textarea id="fQText" placeholder="題目文字（可不填）" style="margin-top:8px"></textarea>
+  </div>
+  <div class="field"><label>答案照片 / 檔案</label>
+    <div class="btn-row">
+      <label class="btn btn-ghost" style="cursor:pointer">📷 拍照<input type="file" id="aCam" accept="image/*" capture="environment" hidden></label>
+      <label class="btn btn-ghost" style="cursor:pointer">🖼️ 上傳檔案<input type="file" id="aFile" accept="image/*,.pdf" multiple hidden></label>
+    </div>
+    <div class="thumbs" id="aThumbs"></div>
+    <textarea id="fAText" placeholder="答案文字（可不填）"></textarea>
+  </div>
+  <div class="field"><label>訂正筆記</label><textarea id="fNote" placeholder="這題錯在哪裡、下次要注意什麼…"></textarea></div>
+  <div class="btn-row">
+    <button class="btn btn-navy" id="saveBtn">儲存</button>
+    <button class="btn btn-ghost" id="cancelBtn">取消</button>
+  </div>
+</div></div>
+
+<div class="modal" id="detailModal"><div class="sheet" id="detailBody"></div></div>
+<script>
+const KEY = 'mistake-notebook-v1';
+const UNITS = ['1 數與式','2 多項式函數','3 直線與圓','4 指數與對數函數','5 數列與級數','6 數據分析','7 排列組合','8 機率','9 三角比','10 三角函數','11 向量的運算與內積','12 空間概念、行列式與外積','13 空間中的平面與直線','14 矩陣','未分類'];
+let items = load();
+let reviewIdx = 0;
+let editingId = null;
+let draftQ = [], draftA = [];
+
+function load(){ try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){ return []; } }
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(items)); }
+  catch(e){ alert('瀏覽器空間滿了，請先匯出備份，再刪除部分題目或照片。'); }
+}
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function fmtDate(ts){ const d = new Date(ts); return d.getFullYear() + '/' + (d.getMonth()+1) + '/' + d.getDate(); }
+
+function fillUnitSelects(){
+  const opts = UNITS.map(u => '<option>' + esc(u) + '</option>').join('');
+  document.getElementById('fUnit').innerHTML = '<option value="">全部章節</option>' + opts;
+  document.getElementById('fUnitInput').innerHTML = opts;
+}
+
+function fileToEntry(file){
+  return new Promise((resolve, reject) => {
+    if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
+      const r = new FileReader();
+      r.onload = () => resolve({ kind: 'pdf', data: r.result, name: file.name });
+      r.onerror = reject; r.readAsDataURL(file); return;
+    }
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const max = 1280, scale = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve({ kind: 'image', data: c.toDataURL('image/jpeg', 0.82), name: file.name });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('圖片讀取失敗')); };
+    img.src = url;
+  });
+}
+async function handleFiles(list, slot){
+  const files = Array.from(list || []);
+  for (const f of files) {
+    try { (slot === 'q' ? draftQ : draftA).push(await fileToEntry(f)); }
+    catch(e){ alert('有一個檔案加入失敗：' + f.name); }
+  }
+  renderThumbs();
+}
+function renderThumbs(){
+  const paint = (el, arr, slot) => {
+    el.innerHTML = arr.map((e, i) => '<div class="t">' + (e.kind === 'image'
+      ? '<img src="' + e.data + '">'
+      : '<div style="width:84px;height:84px;display:flex;align-items:center;justify-content:center;background:#fdf6e3;border:1px solid var(--line);border-radius:8px;font-size:12px">📄 PDF</div>')
+      + '<button class="x" data-slot="' + slot + '" data-i="' + i + '">✕</button></div>').join('');
+  };
+  paint(document.getElementById('qThumbs'), draftQ, 'q');
+  paint(document.getElementById('aThumbs'), draftA, 'a');
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('.thumbs .x');
+  if (b) { const arr = b.dataset.slot === 'q' ? draftQ : draftA; arr.splice(+b.dataset.i, 1); renderThumbs(); }
+});
+
+function filtered(){
+  const q = (document.getElementById('q').value || '').trim();
+  const u = document.getElementById('fUnit').value;
+  const s = document.getElementById('fState').value;
+  return items.filter(it => {
+    if (u && it.unit !== u) return false;
+    if (s === 'todo' && it.done) return false;
+    if (s === 'done' && !it.done) return false;
+    if (q && !((it.title + ' ' + it.unit + ' ' + it.reason + ' ' + (it.qText || '') + ' ' + (it.note || '')).includes(q))) return false;
+    return true;
+  }).sort((a, b) => b.createdAt - a.createdAt);
+}
+
+function mediaHTML(arr){
+  if (!arr || !arr.length) return '';
+  return '<div class="imgs">' + arr.map(e => e.kind === 'image'
+    ? '<img src="' + e.data + '">'
+    : '<a class="pdf-link" href="' + e.data + '" target="_blank" rel="noopener">📄 開啟 PDF：' + esc(e.name) + '</a>').join('') + '</div>';
+}
+
+function renderStats(){
+  const todo = items.filter(i => !i.done).length;
+  document.getElementById('stTotal').textContent = items.length;
+  document.getElementById('stTodo').textContent = todo;
+  document.getElementById('stDone').textContent = items.length - todo;
+}
+
+function renderList(){
+  const list = filtered();
+  const el = document.getElementById('list');
+  document.getElementById('emptyMsg').style.display = items.length === 0 ? 'block' : 'none';
+  el.innerHTML = list.map(it => {
+    const first = (it.qFiles || []).find(f => f.kind === 'image');
+    return '<div class="card" data-id="' + it.id + '">'
+      + (first ? '<img class="thumb" src="' + first.data + '">' : '')
+      + '<div class="body"><p class="title">' + esc(it.title || '未命名題目') + '</p>'
+      + '<div class="meta"><span class="chip">' + esc(it.unit) + '</span><span class="chip">' + esc(it.reason) + '</span>'
+      + '<span class="' + (it.done ? 'badge-done' : 'badge-todo') + '">' + (it.done ? '已訂正' : '待訂正') + '</span></div>'
+      + '<div class="meta" style="margin-top:6px">' + fmtDate(it.createdAt) + '</div></div></div>';
+  }).join('');
+  if (items.length && !list.length) el.innerHTML = '<div class="empty">沒有符合條件的題目。</div>';
+}
+
+function renderReview(){
+  const todos = items.filter(i => !i.done).sort((a, b) => a.createdAt - b.createdAt);
+  const panel = document.getElementById('reviewPanel');
+  if (!todos.length) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  if (reviewIdx >= todos.length) reviewIdx = 0;
+  const it = todos[reviewIdx];
+  document.getElementById('reviewProgress').textContent = '待訂正第 ' + (reviewIdx + 1) + ' / ' + todos.length + ' 題';
+  document.getElementById('reviewBody').innerHTML =
+    '<p style="font-weight:700;margin:0 0 8px">' + esc(it.title || '未命名題目') + ' <span class="chip">' + esc(it.unit) + '</span></p>'
+    + mediaHTML(it.qFiles) + (it.qText ? '<p>' + esc(it.qText) + '</p>' : '')
+    + '<div class="answer-hidden" style="margin-top:12px"><div class="blur" id="reviewAnswer">' + mediaHTML(it.aFiles) + (it.aText ? '<p>' + esc(it.aText) + '</p>' : '<p class="note">（未填答案）</p>') + '</div>'
+    + '<button class="reveal-btn" id="reviewRevealBtn">👁️ 先自己算算，點一下看答案</button></div>';
+  document.getElementById('reviewRevealBtn').onclick = () => {
+    document.getElementById('reviewAnswer').classList.remove('blur');
+    document.getElementById('reviewRevealBtn').style.display = 'none';
+  };
+  document.getElementById('reviewDoneBtn').onclick = () => { it.done = true; save(); renderAll(); };
+  document.getElementById('reviewNextBtn').onclick = () => { reviewIdx = (reviewIdx + 1) % todos.length; renderReview(); };
+  panel.dataset.currentId = it.id;
+}
+
+function renderAll(){ renderStats(); renderList(); renderReview(); }
+
+function openForm(it){
+  editingId = it ? it.id : null;
+  draftQ = it ? JSON.parse(JSON.stringify(it.qFiles || [])) : [];
+  draftA = it ? JSON.parse(JSON.stringify(it.aFiles || [])) : [];
+  document.getElementById('formTitle').textContent = it ? '編輯錯題' : '新增錯題';
+  document.getElementById('fTitle').value = it ? it.title : '';
+  document.getElementById('fUnitInput').value = it ? it.unit : '未分類';
+  document.getElementById('fReason').value = it ? it.reason : '計算錯誤';
+  document.getElementById('fQText').value = it ? (it.qText || '') : '';
+  document.getElementById('fAText').value = it ? (it.aText || '') : '';
+  document.getElementById('fNote').value = it ? (it.note || '') : '';
+  renderThumbs();
+  document.getElementById('formModal').classList.add('open');
+}
+function closeForm(){ document.getElementById('formModal').classList.remove('open'); }
+
+function openDetail(id){
+  const it = items.find(i => i.id === id);
+  if (!it) return;
+  document.getElementById('detailBody').innerHTML =
+    '<h2>' + esc(it.title || '未命名題目') + '</h2>'
+    + '<p class="meta"><span class="chip">' + esc(it.unit) + '</span><span class="chip">' + esc(it.reason) + '</span>'
+    + '<span class="' + (it.done ? 'badge-done' : 'badge-todo') + '">' + (it.done ? '已訂正' : '待訂正') + '</span>　' + fmtDate(it.createdAt) + '</p>'
+    + '<h3 style="color:var(--navy)">題目</h3>' + mediaHTML(it.qFiles) + (it.qText ? '<p>' + esc(it.qText) + '</p>' : '')
+    + '<h3 style="color:var(--navy)">答案</h3><div class="answer-hidden"><div class="blur" id="detailAnswer">' + mediaHTML(it.aFiles) + (it.aText ? '<p>' + esc(it.aText) + '</p>' : '<p class="note">（未填答案）</p>') + '</div>'
+    + '<button class="reveal-btn" id="detailRevealBtn">👁️ 點一下看答案</button></div>'
+    + (it.note ? '<h3 style="color:var(--navy)">訂正筆記</h3><p>' + esc(it.note) + '</p>' : '')
+    + '<div class="btn-row" style="margin-top:16px">'
+    + '<button class="btn btn-gold" id="detailToggleBtn">' + (it.done ? '改回待訂正' : '標記已訂正 ✓') + '</button>'
+    + '<button class="btn btn-ghost" id="detailEditBtn">編輯</button>'
+    + '<button class="btn btn-danger" id="detailDelBtn">刪除</button>'
+    + '<button class="btn btn-ghost" id="detailCloseBtn">關閉</button></div>';
+  document.getElementById('detailModal').classList.add('open');
+  document.getElementById('detailRevealBtn').onclick = () => {
+    document.getElementById('detailAnswer').classList.remove('blur');
+    document.getElementById('detailRevealBtn').style.display = 'none';
+  };
+  document.getElementById('detailToggleBtn').onclick = () => { it.done = !it.done; save(); closeDetail(); renderAll(); };
+  document.getElementById('detailEditBtn').onclick = () => { closeDetail(); openForm(it); };
+  document.getElementById('detailDelBtn').onclick = () => {
+    if (confirm('確定要刪除這一題嗎？')) { items = items.filter(i => i.id !== id); save(); closeDetail(); renderAll(); }
+  };
+  document.getElementById('detailCloseBtn').onclick = closeDetail;
+}
+function closeDetail(){ document.getElementById('detailModal').classList.remove('open'); }
+
+document.getElementById('addBtn').onclick = () => openForm(null);
+document.getElementById('cancelBtn').onclick = closeForm;
+document.getElementById('saveBtn').onclick = () => {
+  const title = document.getElementById('fTitle').value.trim();
+  const data = {
+    title: title || ('錯題 ' + fmtDate(Date.now())),
+    unit: document.getElementById('fUnitInput').value,
+    reason: document.getElementById('fReason').value,
+    qFiles: draftQ, aFiles: draftA,
+    qText: document.getElementById('fQText').value.trim(),
+    aText: document.getElementById('fAText').value.trim(),
+    note: document.getElementById('fNote').value.trim()
+  };
+  if (editingId) { Object.assign(items.find(i => i.id === editingId), data); }
+  else { items.unshift(Object.assign({ id: uid(), createdAt: Date.now(), done: false }, data)); }
+  save(); closeForm(); renderAll();
+};
+document.getElementById('list').addEventListener('click', e => {
+  const c = e.target.closest('.card');
+  if (c) openDetail(c.dataset.id);
+});
+document.getElementById('q').addEventListener('input', renderList);
+document.getElementById('fUnit').addEventListener('change', renderList);
+document.getElementById('fState').addEventListener('change', renderList);
+document.getElementById('qCam').addEventListener('change', e => { handleFiles(e.target.files, 'q'); e.target.value = ''; });
+document.getElementById('qFile').addEventListener('change', e => { handleFiles(e.target.files, 'q'); e.target.value = ''; });
+document.getElementById('aCam').addEventListener('change', e => { handleFiles(e.target.files, 'a'); e.target.value = ''; });
+document.getElementById('aFile').addEventListener('change', e => { handleFiles(e.target.files, 'a'); e.target.value = ''; });
+document.getElementById('exportBtn').onclick = () => {
+  const blob = new Blob([JSON.stringify({ app: 'mistake-notebook', exportedAt: new Date().toISOString(), items: items }, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'mistake-notebook-backup.json';
+  a.click(); URL.revokeObjectURL(a.href);
+};
+document.getElementById('importFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const data = JSON.parse(r.result);
+      const arr = Array.isArray(data) ? data : data.items;
+      if (!Array.isArray(arr)) throw new Error('格式不對');
+      if (!confirm('匯入 ' + arr.length + ' 題，會加到現有的錯題本裡，確定嗎？')) return;
+      items = items.concat(arr.map(it => Object.assign({ id: uid(), createdAt: Date.now(), done: false }, it)));
+      save(); renderAll(); alert('匯入完成！');
+    } catch(err){ alert('備份檔格式不正確，無法匯入。'); }
+  };
+  r.readAsText(f); e.target.value = '';
+});
+document.getElementById('formModal').addEventListener('click', e => { if (e.target.id === 'formModal') closeForm(); });
+document.getElementById('detailModal').addEventListener('click', e => { if (e.target.id === 'detailModal') closeDetail(); });
+
+fillUnitSelects();
+renderAll();
+</script>
+</body>
+</html>
